@@ -38,12 +38,13 @@ double poprzednie_kameraZ;
 double poprzednie_kameraD;
 
 double rotation = 0;
+float change = 0;
 
 //macierze
 
 glm::mat4 MV; //modelview - macierz modelu i świata
 glm::mat4 P;  //projection - macierz projekcji, czyli naszej perspektywy
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+glm::vec3 lightPos(0.0f, 1.0f, 0.0f);
 GLuint objectColor_id = 0;
 GLuint lightColor_id = 0;
 GLuint lightPos_id = 0;
@@ -118,7 +119,7 @@ void mysz(int button, int state, int x, int y)
 		poprzednie_kameraZ = kameraZ;
 		poprzednie_kameraD = kameraD;
 		break;
-
+		
 	}
 }
 /*******************************************/
@@ -161,14 +162,14 @@ void rysuj(void)
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
 	glUseProgram(programID); //u┐yj programu, czyli naszego shadera	
 
 	GLuint MVP_id = glGetUniformLocation(programID, "MVP"); // pobierz lokalizację zmiennej 'uniform' "MV" w programie
 
 
 	MV = glm::mat4(1.0f);  //macierz jednostkowa
-	MV = glm::translate(MV, glm::vec3(0, -1, kameraD));
+	MV = glm::translate(MV, glm::vec3(0, -1, kameraD*0.5));
 
 	MV = glm::rotate(MV, (float)glm::radians(kameraZ + 10), glm::vec3(1, 0, 0));
 	MV = glm::rotate(MV, (float)glm::radians(kameraX + 30), glm::vec3(0, 1, 0));
@@ -186,18 +187,19 @@ void rysuj(void)
 
 	// render the cube
 	glBindVertexArray(cubeVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 30, 6);
 
+	lightPos[1] = 1.0f + sin(change); // zmiana pozycji światła w górę i w dół
 
 	glUseProgram(lamp_ID);
 	GLuint MVPlamp_id = glGetUniformLocation(lamp_ID, "MVP");
 	MV = glm::translate(MV, lightPos);
-	MV = glm::scale(MV, glm::vec3(0.4f, 0.4f, 0.4f));
+	MV = glm::scale(MV, glm::vec3(0.1f, 0.1f, 0.1f));
 	MV = glm::rotate(MV, (float)glm::radians(-30.0), glm::vec3(0, 1, 0));
 	MVP = P * MV;
 	glUniformMatrix4fv(MVPlamp_id, 1, GL_FALSE, &(MVP[0][0]));
 	glBindVertexArray(lightVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 6, 36);
 
 	glFlush();
 	glutSwapBuffers();
@@ -228,6 +230,7 @@ void idle()
 GLfloat ad = 0.0;
 
 void timer(int value) {
+	change += 0.05f;
 	glutTimerFunc(20, timer, 0);
 }
 /*###############################################################*/
@@ -243,7 +246,7 @@ int main(int argc, char** argv)
 
 	glutDisplayFunc(rysuj);			// def. funkcji rysuj¦cej
 	glutIdleFunc(idle);			// def. funkcji rysuj¦cej w czasie wolnym procesoora (w efekcie: ci¦gle wykonywanej)
-	//glutTimerFunc(20, timer, 0);
+	glutTimerFunc(20, timer, 0);
 	glutReshapeFunc(rozmiar); // def. obs-ugi zdarzenia resize (GLUT)
 
 	glutKeyboardFunc(klawisz);		// def. obsługi klawiatury
